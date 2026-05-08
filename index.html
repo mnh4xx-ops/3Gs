@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>وردل عربي</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #121213;
+    --surface: #1a1a1b;
+    --text: #ffffff;
+    --muted: #d7dadc;
+    --border: #3a3a3c;
+    --border-filled: #565758;
+    --correct: #538d4e;
+    --present: #b59f3b;
+    --absent: #3a3a3c;
+    --key-bg: #818384;
+    --key-text: #ffffff;
+    --header-border: #3a3a3c;
+    --accent: #538d4e;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Tahoma",
+                 "Geeza Pro", "Damascus", "Al Bayan", system-ui, sans-serif;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  header {
+    width: 100%;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--header-border);
+    text-align: center;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  h1 {
+    font-size: clamp(22px, 5vw, 32px);
+    font-weight: 800;
+    letter-spacing: 1px;
+  }
+
+  .new-game-btn {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 1px solid var(--border-filled);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .new-game-btn:hover { background: rgba(255,255,255,0.08); border-color: var(--accent); }
+  .new-game-btn:active { transform: translateY(-50%) scale(0.96); }
+
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .board-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    width: 100%;
+    padding: 10px 0;
+    min-height: 0;
+  }
+
+  .board {
+    display: grid;
+    grid-template-rows: repeat(6, 1fr);
+    gap: 5px;
+    width: min(340px, 82vw);
+    height: min(408px, calc(82vw * 6 / 5));
+    max-height: 100%;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+    direction: rtl;
+  }
+
+  .tile {
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(22px, 6.5vw, 32px);
+    font-weight: 800;
+    line-height: 1;
+    user-select: none;
+    transition: border-color 0.1s;
+  }
+
+  .tile.filled {
+    border-color: var(--border-filled);
+    animation: pop 0.12s ease;
+  }
+
+  .tile.flip {
+    animation: flip 0.6s ease forwards;
+  }
+
+  .tile.correct { background: var(--correct); border-color: var(--correct); color: #fff; }
+  .tile.present { background: var(--present); border-color: var(--present); color: #fff; }
+  .tile.absent  { background: var(--absent);  border-color: var(--absent);  color: #fff; }
+
+  .row.shake { animation: shake 0.45s ease; }
+
+  .row.win .tile { animation: bounce 0.55s ease; }
+  .row.win .tile:nth-child(1) { animation-delay: 0.0s; }
+  .row.win .tile:nth-child(2) { animation-delay: 0.1s; }
+  .row.win .tile:nth-child(3) { animation-delay: 0.2s; }
+  .row.win .tile:nth-child(4) { animation-delay: 0.3s; }
+  .row.win .tile:nth-child(5) { animation-delay: 0.4s; }
+
+  @keyframes pop {
+    0%   { transform: scale(0.85); }
+    60%  { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+  @keyframes flip {
+    0%   { transform: rotateX(0); }
+    50%  { transform: rotateX(-90deg); }
+    100% { transform: rotateX(0); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-18px); }
+    70% { transform: translateY(-4px); }
+  }
+
+  .keyboard {
+    width: 100%;
+    max-width: 520px;
+    padding: 8px 4px 12px;
+    direction: rtl;
+    flex-shrink: 0;
+  }
+
+  .keyboard-row {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 6px;
+  }
+  .keyboard-row:last-child { margin-bottom: 0; }
+
+  .key {
+    flex: 1;
+    min-width: 0;
+    height: 52px;
+    border: none;
+    border-radius: 5px;
+    background: var(--key-bg);
+    color: var(--key-text);
+    font-family: inherit;
+    font-size: clamp(15px, 4vw, 19px);
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.25s, transform 0.05s, opacity 0.1s;
+  }
+  .key:hover { opacity: 0.88; }
+  .key:active { transform: scale(0.93); }
+  .key.wide {
+    flex: 1.6;
+    font-size: clamp(11px, 3vw, 14px);
+  }
+  .key.correct { background: var(--correct); }
+  .key.present { background: var(--present); }
+  .key.absent  { background: var(--absent);  color: #d7dadc; }
+
+  .toast-container {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .toast {
+    background: #ffffff;
+    color: #000000;
+    padding: 12px 22px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 14px;
+    animation: toastIn 0.2s ease;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+    white-space: nowrap;
+  }
+  .toast.fade { animation: toastOut 0.45s ease forwards; }
+  @keyframes toastIn  { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-6px); } }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.72);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 20px;
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+  .modal-overlay.show { display: flex; animation: fadeIn 0.25s ease; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border-filled);
+    border-radius: 14px;
+    padding: 32px 26px 26px;
+    max-width: 340px;
+    width: 100%;
+    text-align: center;
+    animation: scaleIn 0.3s ease;
+  }
+  .modal h2 { font-size: 26px; margin-bottom: 12px; font-weight: 800; }
+  .modal p  { margin-bottom: 6px; font-size: 16px; color: var(--muted); }
+  .modal .word {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--correct);
+    margin: 18px 0 10px;
+    letter-spacing: 2px;
+  }
+  .modal .word.lose { color: var(--present); }
+  .modal-btn {
+    margin-top: 18px;
+    background: var(--correct);
+    color: #fff;
+    border: none;
+    padding: 13px 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    transition: opacity 0.2s, transform 0.08s;
+  }
+  .modal-btn:hover  { opacity: 0.92; }
+  .modal-btn:active { transform: scale(0.96); }
+
+  @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+  @media (max-width: 380px) {
+    .key { height: 46px; font-size: 15px; }
+    .key.wide { font-size: 11px; }
+    h1 { font-size: 22px; }
+    .new-game-btn { font-size: 12px; padding: 5px 10px; }
+  }
+
+  @media (min-height: 720px) {
+    .board { width: min(360px, 84vw); height: min(432px, calc(84vw * 6 / 5)); }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>وردل عربي</h1>
+    <button class="new-game-btn" onclick="newGame()">لعبة جديدة</button>
+  </header>
+
+  <main>
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+    </div>
+
+    <div class="keyboard" id="keyboard"></div>
+  </main>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <h2 id="modalTitle"></h2>
+      <p id="modalText"></p>
+      <div class="word" id="modalWord"></div>
+      <button class="modal-btn" onclick="newGame()">لعبة جديدة</button>
+    </div>
+  </div>
+
+  <script>
+    const WORDS = [
+      'مدرسة','مكتبة','سيارة','طاولة','نافذة',
+      'شجرات','ملابس','دراجة','زجاجة','حقيبة',
+      'خزانة','نظارة','كراسي','مصباح','ملعقة',
+      'منشار','مسمار','تفاحة','زرافة','مدينة',
+      'رسالة','جريدة','قصيدة','معلمة','جامعة',
+      'طبيبة','مهندس','ساعات'
+    ];
+
+    const KEYBOARD_LAYOUT = [
+      ['ا','ب','ت','ث','ج','ح','خ','د','ذ','ر'],
+      ['ز','س','ش','ص','ض','ط','ظ','ع','غ','ف'],
+      ['ENTER','ق','ك','ل','م','ن','ه','و','ي','ة','BACK']
+    ];
+
+    const WORD_LENGTH = 5;
+    const MAX_GUESSES = 6;
+
+    let targetWord = '';
+    let targetLetters = [];
+    let currentGuess = [];
+    let currentRow = 0;
+    let gameOver = false;
+    let isAnimating = false;
+    let keyStates = {};
+
+    function splitArabic(word) {
+      return Array.from(word);
+    }
+
+    function normalizeChar(ch) {
+      if (ch === 'أ' || ch === 'إ' || ch === 'آ') return 'ا';
+      if (ch === 'ى') return 'ي';
+      return ch;
+    }
+
+    function isArabicLetter(ch) {
+      if (!ch || ch.length !== 1) return false;
+      const code = ch.charCodeAt(0);
+      return (code >= 0x0621 && code <= 0x064A) || ch === 'ة' || ch === 'ى';
+    }
+
+    function isOnKeyboard(ch) {
+      for (const row of KEYBOARD_LAYOUT) {
+        if (row.includes(ch)) return true;
+      }
+      return false;
+    }
+
+    function buildBoard() {
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+      for (let r = 0; r < MAX_GUESSES; r++) {
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.id = `row-${r}`;
+        for (let c = 0; c < WORD_LENGTH; c++) {
+          const tile = document.createElement('div');
+          tile.className = 'tile';
+          tile.id = `tile-${r}-${c}`;
+          row.appendChild(tile);
+        }
+        board.appendChild(row);
+      }
+    }
+
+    function buildKeyboard() {
+      const keyboard = document.getElementById('keyboard');
+      keyboard.innerHTML = '';
+      KEYBOARD_LAYOUT.forEach(rowKeys => {
+        const row = document.createElement('div');
+        row.className = 'keyboard-row';
+        rowKeys.forEach(key => {
+          const btn = document.createElement('button');
+          btn.className = 'key';
+          btn.type = 'button';
+          if (key === 'ENTER') {
+            btn.textContent = 'إدخال';
+            btn.classList.add('wide');
+            btn.dataset.key = 'ENTER';
+            btn.setAttribute('aria-label', 'إدخال');
+          } else if (key === 'BACK') {
+            btn.textContent = 'حذف';
+            btn.classList.add('wide');
+            btn.dataset.key = 'BACK';
+            btn.setAttribute('aria-label', 'حذف');
+          } else {
+            btn.textContent = key;
+            btn.dataset.key = key;
+            btn.id = `key-${key}`;
+          }
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleKey(btn.dataset.key);
+            btn.blur();
+          });
+          row.appendChild(btn);
+        });
+        keyboard.appendChild(row);
+      });
+    }
+
+    function handleKey(key) {
+      if (gameOver || isAnimating) return;
+
+      if (key === 'ENTER') {
+        submitGuess();
+      } else if (key === 'BACK') {
+        if (currentGuess.length > 0) {
+          currentGuess.pop();
+          updateRow();
+        }
+      } else if (isArabicLetter(key) && isOnKeyboard(key)) {
+        if (currentGuess.length < WORD_LENGTH) {
+          currentGuess.push(key);
+          updateRow();
+        }
+      }
+    }
+
+    function updateRow() {
+      for (let c = 0; c < WORD_LENGTH; c++) {
+        const tile = document.getElementById(`tile-${currentRow}-${c}`);
+        const letter = currentGuess[c];
+        if (letter) {
+          if (tile.textContent !== letter) {
+            tile.textContent = letter;
+            tile.classList.add('filled');
+          }
+        } else {
+          tile.textContent = '';
+          tile.classList.remove('filled');
+        }
+      }
+    }
+
+    function showToast(message, duration = 1400) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add('fade');
+        setTimeout(() => toast.remove(), 450);
+      }, duration);
+    }
+
+    function shakeRow() {
+      const row = document.getElementById(`row-${currentRow}`);
+      row.classList.remove('shake');
+      void row.offsetWidth;
+      row.classList.add('shake');
+      setTimeout(() => row.classList.remove('shake'), 500);
+    }
+
+    function evaluateGuess(guessArr, target) {
+      const result = new Array(WORD_LENGTH).fill('absent');
+      const counts = {};
+
+      for (let i = 0; i < WORD_LENGTH; i++) {
+        if (guessArr[i] === target[i]) {
+          result[i] = 'correct';
+        } else {
+          counts[target[i]] = (counts[target[i]] || 0) + 1;
+        }
+      }
+      for (let i = 0; i < WORD_LENGTH; i++) {
+        if (result[i] === 'correct') continue;
+        const ch = guessArr[i];
+        if (counts[ch] > 0) {
+          result[i] = 'present';
+          counts[ch]--;
+        }
+      }
+      return result;
+    }
+
+    function submitGuess() {
+      if (currentGuess.length !== WORD_LENGTH) {
+        showToast('يجب إدخال 5 أحرف');
+        shakeRow();
+        return;
+      }
+
+      isAnimating = true;
+      const guessArr = currentGuess.slice();
+      const result = evaluateGuess(guessArr, targetLetters);
+
+      for (let c = 0; c < WORD_LENGTH; c++) {
+        const tile = document.getElementById(`tile-${currentRow}-${c}`);
+        setTimeout(() => {
+          tile.classList.add('flip');
+          setTimeout(() => {
+            tile.classList.add(result[c]);
+          }, 300);
+        }, c * 220);
+      }
+
+      const totalAnimTime = WORD_LENGTH * 220 + 350;
+
+      setTimeout(() => {
+        for (let c = 0; c < WORD_LENGTH; c++) {
+          const ch = guessArr[c];
+          const newState = result[c];
+          const cur = keyStates[ch];
+          if (cur === 'correct') continue;
+          if (cur === 'present' && newState === 'absent') continue;
+          keyStates[ch] = newState;
+          const keyEl = document.getElementById(`key-${ch}`);
+          if (keyEl) {
+            keyEl.classList.remove('correct','present','absent');
+            keyEl.classList.add(newState);
+          }
+        }
+      }, totalAnimTime);
+
+      const isWin = result.every(r => r === 'correct');
+
+      setTimeout(() => {
+        if (isWin) {
+          gameOver = true;
+          const row = document.getElementById(`row-${currentRow}`);
+          row.classList.add('win');
+          setTimeout(() => { isAnimating = false; showEndModal(true); }, 900);
+        } else if (currentRow === MAX_GUESSES - 1) {
+          gameOver = true;
+          isAnimating = false;
+          setTimeout(() => showEndModal(false), 400);
+        } else {
+          currentRow++;
+          currentGuess = [];
+          isAnimating = false;
+        }
+      }, totalAnimTime + 50);
+    }
+
+    function attemptsText(n) {
+      if (n === 1) return 'محاولة واحدة';
+      if (n === 2) return 'محاولتين';
+      if (n >= 3 && n <= 10) return `${n} محاولات`;
+      return `${n} محاولة`;
+    }
+
+    function showEndModal(won) {
+      const modal = document.getElementById('modal');
+      const title = document.getElementById('modalTitle');
+      const text  = document.getElementById('modalText');
+      const wordEl = document.getElementById('modalWord');
+
+      if (won) {
+        title.textContent = '🎉 أحسنت!';
+        text.textContent = `لقد فزت في ${attemptsText(currentRow + 1)}`;
+        wordEl.textContent = targetWord;
+        wordEl.classList.remove('lose');
+      } else {
+        title.textContent = '😔 انتهت المحاولات';
+        text.textContent = 'الكلمة الصحيحة كانت:';
+        wordEl.textContent = targetWord;
+        wordEl.classList.add('lose');
+      }
+      modal.classList.add('show');
+    }
+
+    function newGame() {
+      targetWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+      targetLetters = splitArabic(targetWord);
+      currentGuess = [];
+      currentRow = 0;
+      gameOver = false;
+      isAnimating = false;
+      keyStates = {};
+      document.getElementById('modal').classList.remove('show');
+      buildBoard();
+      document.querySelectorAll('.key').forEach(k => {
+        k.classList.remove('correct', 'present', 'absent');
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (gameOver) {
+        if (e.key === 'Enter') { e.preventDefault(); newGame(); }
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleKey('ENTER');
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        handleKey('BACK');
+      } else if (e.key && e.key.length === 1) {
+        const ch = normalizeChar(e.key);
+        if (isArabicLetter(ch) && isOnKeyboard(ch)) {
+          handleKey(ch);
+        }
+      }
+    });
+
+    document.addEventListener('contextmenu', (e) => {
+      if (e.target.classList && e.target.classList.contains('key')) e.preventDefault();
+    });
+
+    buildKeyboard();
+    newGame();
+  </script>
+</body>
+</html>
